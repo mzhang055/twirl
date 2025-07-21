@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Twirl - Chat Transfer</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <div class="logo">
+        <span class="icon">🌀</span>
+        <h1>Twirl</h1>
+      </div>
+      <p class="subtitle">Chat Transfer Extension</p>
+    </header>
+
+    <main class="content">
+      <div class="status-section">
+        <div class="status-indicator" id="statusIndicator">
+          <span class="status-dot" id="statusDot"></span>
+          <span class="status-text" id="statusText">Loading...</span>
+        </div>
+      </div>
+
+      <div class="chat-selection" id="chatSelection">
+        <h3>Select Chat to Transfer</h3>
+        <div class="chat-list" id="chatList">
+          <p class="no-data">No chat history found</p>
+        </div>
+      </div>
+
+      <div class="chat-summary" id="chatSummary" style="display: none;">
+        <h3>Selected Chat Preview</h3>
+        <div class="summary-content" id="summaryContent">
+          <p class="no-data">No chat selected</p>
+        </div>
+        <div class="chat-meta" id="chatMeta"></div>
+      </div>
+
+      <div class="actions">
+        <button class="btn btn-primary" id="copyBtn" disabled>
+          <span class="btn-icon">📋</span>
+          Copy to Clipboard
+        </button>
+        
+        <button class="btn btn-secondary" id="refreshBtn">
+          <span class="btn-icon">🔄</span>
+          Refresh
+        </button>
+        
+        <button class="btn btn-danger" id="clearBtn" disabled>
+          <span class="btn-icon">🗑️</span>
+          Clear Memory
+        </button>
+      </div>
+
+      <div class="instructions" id="instructions">
+        <h4>How to use:</h4>
+        <ol>
+          <li>Visit <strong>ChatGPT</strong> and have a conversation</li>
+          <li>Visit <strong>Claude.ai</strong> to auto-inject the history</li>
+          <li>Continue your conversation seamlessly!</li>
+        </ol>
+      </div>
+    </main>
+
+    <footer class="footer">
+      <p>Made with ❤️ for seamless AI conversations</p>
+    </footer>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

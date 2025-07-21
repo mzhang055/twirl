@@ -1,0 +1,49 @@
+{
+  "manifest_version": 3,
+  "name": "Twirl - Chat Transfer Extension",
+  "version": "1.0.0",
+  "description": "Seamlessly transfer recent conversation history from one AI assistant to another",
+  "permissions": [
+    "storage",
+    "activeTab"
+  ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'"
+  },
+  "host_permissions": [
+    "https://chat.openai.com/*",
+    "https://chatgpt.com/*",
+    "https://claude.ai/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "https://chat.openai.com/*",
+        "https://chatgpt.com/*"
+      ],
+      "js": ["src/config.js", "src/content/chatgpt.js"],
+      "run_at": "document_start"
+    },
+    {
+      "matches": ["https://claude.ai/*"],
+      "js": ["src/config.js", "src/content/claude.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_popup": "src/popup/popup.html",
+    "default_title": "Twirl - Transfer Chat History",
+    "default_icon": {
+      "16": "assets/icons/icon16.png",
+      "32": "assets/icons/icon32.png",
+      "48": "assets/icons/icon48.png",
+      "128": "assets/icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "assets/icons/icon16.png",
+    "32": "assets/icons/icon32.png",
+    "48": "assets/icons/icon48.png",
+    "128": "assets/icons/icon128.png"
+  }
+}

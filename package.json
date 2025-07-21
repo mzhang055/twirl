@@ -1,0 +1,27 @@
+{
+  "name": "twirl-chat-transfer-extension",
+  "version": "1.0.0",
+  "description": "Seamlessly transfer recent conversation history from one AI assistant to another",
+  "scripts": {
+    "dev": "echo 'Load unpacked extension from current directory in Chrome Developer Mode'",
+    "test": "echo 'No tests configured yet'",
+    "lint": "echo 'No linting configured yet'"
+  },
+  "keywords": [
+    "chrome-extension",
+    "chatgpt",
+    "claude",
+    "ai",
+    "conversation-transfer"
+  ],
+  "author": "Twirl Extension",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yourusername/twirl.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yourusername/twirl/issues"
+  },
+  "homepage": "https://github.com/yourusername/twirl#readme"
+}
