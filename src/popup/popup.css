@@ -346,3 +346,125 @@ h1 {
 .summary-content::-webkit-scrollbar-thumb:hover {
   background: #a8a8a8;
 }
+
+/* Platform Switcher */
+.platform-switcher {
+  margin-bottom: 20px;
+  padding: 16px;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-radius: 12px;
+  border: 1px solid #dee2e6;
+}
+
+.platform-switcher h3 {
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0 0 12px 0;
+  color: #495057;
+  text-align: center;
+}
+
+.platform-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.platform-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 8px;
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  color: #495057;
+  min-height: 60px;
+}
+
+.platform-btn:hover {
+  border-color: #007bff;
+  background: #f8f9ff;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 123, 255, 0.15);
+}
+
+.platform-btn:active {
+  transform: translateY(0);
+}
+
+.platform-icon {
+  margin-bottom: 4px;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.platform-icon svg {
+  width: 20px;
+  height: 20px;
+  transition: all 0.2s ease;
+}
+
+.platform-btn span {
+  font-size: 11px;
+  font-weight: 500;
+  text-align: center;
+}
+
+/* Platform-specific colors */
+.chatgpt-icon {
+  color: #10a37f;
+}
+
+.platform-btn:hover .chatgpt-icon {
+  color: #0d8c6c;
+}
+
+.claude-icon {
+  color: #cc785c;
+}
+
+.platform-btn:hover .claude-icon {
+  color: #b8654a;
+}
+
+.perplexity-icon {
+  color: #20b2aa;
+}
+
+.platform-btn:hover .perplexity-icon {
+  color: #1a9b96;
+}
+
+.gemini-icon {
+  color: #4285f4;
+}
+
+.platform-btn:hover .gemini-icon {
+  color: #3367d6;
+}
+
+/* Loading state for platform buttons */
+.platform-btn.loading {
+  pointer-events: none;
+  opacity: 0.7;
+}
+
+.platform-btn.loading .platform-icon {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}

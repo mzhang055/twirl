@@ -16,6 +16,16 @@ class TwirlPopup {
     document.getElementById('copyBtn').addEventListener('click', () => this.copyToClipboard());
     document.getElementById('refreshBtn').addEventListener('click', () => this.refresh());
     document.getElementById('clearBtn').addEventListener('click', () => this.clearMemory());
+    
+    // Platform switcher buttons
+    document.addEventListener('click', (e) => {
+      if (e.target.closest('.platform-btn')) {
+        const button = e.target.closest('.platform-btn');
+        const platform = button.dataset.platform;
+        const url = button.dataset.url;
+        this.switchToPlatform(platform, url, button);
+      }
+    });
   }
 
   async loadChatData() {
@@ -43,10 +53,12 @@ class TwirlPopup {
         this.displayChatList();
         this.selectChat(this.selectedChatId);
         this.enableButtons();
+        this.showPlatformSwitcher();
       } else {
         this.updateStatus('error', 'No chat history found');
         this.displayNoData();
         this.disableButtons();
+        this.hidePlatformSwitcher();
       }
     } catch (error) {
       console.error('Error loading chat data:', error);
@@ -310,6 +322,134 @@ class TwirlPopup {
     if (hours > 0) return `${hours}h ago`;
     if (minutes > 0) return `${minutes}m ago`;
     return 'Just now';
+  }
+
+  showPlatformSwitcher() {
+    const switcher = document.getElementById('platformSwitcher');
+    if (switcher && this.chatData) {
+      switcher.style.display = 'block';
+      
+      // Update button states based on current platform
+      this.updatePlatformButtons();
+    }
+  }
+
+  hidePlatformSwitcher() {
+    const switcher = document.getElementById('platformSwitcher');
+    if (switcher) {
+      switcher.style.display = 'none';
+    }
+  }
+
+  updatePlatformButtons() {
+    // Get current tab info to highlight current platform
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      if (tabs[0]) {
+        const currentUrl = tabs[0].url;
+        const buttons = document.querySelectorAll('.platform-btn');
+        
+        buttons.forEach(button => {
+          const platformUrl = button.dataset.url;
+          const isCurrentPlatform = currentUrl.includes(this.getHostFromUrl(platformUrl));
+          
+          if (isCurrentPlatform) {
+            button.style.border = '2px solid #28a745';
+            button.style.background = '#f8fff8';
+            button.style.opacity = '0.7';
+            button.style.pointerEvents = 'none';
+            button.title = 'You are currently on this platform';
+          } else {
+            button.style.border = '2px solid #e9ecef';
+            button.style.background = 'white';
+            button.style.opacity = '1';
+            button.style.pointerEvents = 'auto';
+            button.title = `Switch to ${button.dataset.platform}`;
+          }
+        });
+      }
+    });
+  }
+
+  getHostFromUrl(url) {
+    try {
+      return new URL(url).hostname;
+    } catch {
+      return '';
+    }
+  }
+
+  async switchToPlatform(platform, url, button) {
+    if (!this.chatData || !this.chatData.messages) {
+      this.showNotification('No chat selected to transfer', 'error');
+      return;
+    }
+
+    try {
+      // Add loading state
+      button.classList.add('loading');
+      
+      // Format the chat for transfer
+      const formattedChat = this.formatChatHistory();
+      
+      // Store the formatted chat in a way the target platform can access
+      await this.prepareChatForTransfer(formattedChat, platform);
+      
+      // Open the target platform
+      chrome.tabs.create({ url: url }, (tab) => {
+        // Show success notification
+        this.showNotification(`Opening ${platform} with your conversation...`, 'success');
+        
+        // Close popup after successful transfer
+        setTimeout(() => {
+          window.close();
+        }, 1000);
+      });
+      
+    } catch (error) {
+      console.error('Failed to switch platforms:', error);
+      this.showNotification('Failed to switch platforms', 'error');
+      button.classList.remove('loading');
+    }
+  }
+
+  async prepareChatForTransfer(formattedChat, targetPlatform) {
+    // Store the chat in a special transfer key that content scripts can pick up
+    await chrome.storage.local.set({
+      twirlTransferData: {
+        chat: formattedChat,
+        targetPlatform: targetPlatform,
+        timestamp: Date.now(),
+        source: this.chatData.source || 'Unknown'
+      }
+    });
+  }
+
+  formatChatHistoryForPlatform(platform) {
+    if (!this.chatData || !this.chatData.messages) return '';
+
+    const source = this.chatData.source || 'Previous conversation';
+    const header = `Context from ${source}:\n\n`;
+    const messages = this.chatData.messages.join('\n\n');
+    
+    // Platform-specific formatting
+    let footer = '\n\n---\n\nPlease continue this conversation.';
+    
+    switch (platform) {
+      case 'chatgpt':
+        footer = '\n\n---\n\nPlease continue this conversation where we left off.';
+        break;
+      case 'claude':
+        footer = '\n\n---\n\nPlease continue this conversation based on the context above.';
+        break;
+      case 'perplexity':
+        footer = '\n\n---\n\nPlease continue this conversation and provide additional insights.';
+        break;
+      case 'gemini':
+        footer = '\n\n---\n\nPlease continue this conversation with your perspective.';
+        break;
+    }
+    
+    return header + messages + footer;
   }
 }
 
