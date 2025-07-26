@@ -1,4 +1,4 @@
-# 🌀 Twirl - Chat Transfer Extension
+# Twirl - Chat Transfer Extension
 
 Seamlessly transfer recent conversation history from one AI assistant (e.g., ChatGPT) to another (e.g., Claude) so you can continue conversations without starting over.
 
