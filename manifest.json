@@ -24,15 +24,27 @@
     {
       "matches": [
         "https://chat.openai.com/*",
-        "https://chatgpt.com/*",
-        "https://claude.ai/*",
-        "https://perplexity.ai/*",
-        "https://gemini.google.com/*",
-        "https://bard.google.com/*",
-        "https://poe.com/*",
-        "https://character.ai/*"
+        "https://chatgpt.com/*"
       ],
-      "js": ["src/config.js", "src/content/universal-extractor.js"],
+      "js": ["src/config.js", "src/content/chatgpt-extractor.js"],
+      "run_at": "document_start"
+    },
+    {
+      "matches": ["https://claude.ai/*"],
+      "js": ["src/config.js", "src/content/claude-extractor.js"],
+      "run_at": "document_start"
+    },
+    {
+      "matches": ["https://perplexity.ai/*"],
+      "js": ["src/config.js", "src/content/perplexity-extractor.js"],
+      "run_at": "document_start"
+    },
+    {
+      "matches": [
+        "https://gemini.google.com/*",
+        "https://bard.google.com/*"
+      ],
+      "js": ["src/config.js", "src/content/gemini-extractor.js"],
       "run_at": "document_start"
     },
     {
