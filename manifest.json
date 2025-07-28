@@ -37,12 +37,16 @@
     },
     {
       "matches": [
+        "https://chat.openai.com/*",
+        "https://chatgpt.com/*",
         "https://claude.ai/*",
         "https://perplexity.ai/*",
         "https://gemini.google.com/*",
-        "https://bard.google.com/*"
+        "https://bard.google.com/*",
+        "https://poe.com/*",
+        "https://character.ai/*"
       ],
-      "js": ["src/config.js", "src/content/claude.js"],
+      "js": ["src/config.js", "src/content/universal-injector.js"],
       "run_at": "document_idle"
     }
   ],

@@ -1,16 +1,40 @@
-// Content script for Claude chat injection
-class ClaudeInjector {
+// Universal chat injector for multiple AI platforms
+class UniversalChatInjector {
   constructor() {
     this.injected = false;
     this.attempts = 0;
     this.maxAttempts = 20;
-    this.processedContent = new Set(); // Track processed content to avoid duplicates
+    this.processedContent = new Set();
+    this.platform = this.detectPlatform();
     
     // Use global config for feature flags
     this.config = window.TwirlConfig || {};
     
-    this.log('Claude content script loaded');
-    this.init();
+    this.log(`Universal injector loaded for platform: ${this.platform}`);
+    
+    if (this.platform !== 'unknown') {
+      this.init();
+    }
+  }
+
+  detectPlatform() {
+    const hostname = window.location.hostname;
+    
+    if (hostname.includes('openai.com') || hostname.includes('chatgpt.com')) {
+      return 'chatgpt';
+    } else if (hostname.includes('claude.ai')) {
+      return 'claude';
+    } else if (hostname.includes('perplexity.ai')) {
+      return 'perplexity';
+    } else if (hostname.includes('gemini.google.com') || hostname.includes('bard.google.com')) {
+      return 'gemini';
+    } else if (hostname.includes('poe.com')) {
+      return 'poe';
+    } else if (hostname.includes('character.ai')) {
+      return 'character';
+    }
+    
+    return 'unknown';
   }
 
   log(message, ...args) {
@@ -24,7 +48,7 @@ class ClaudeInjector {
   }
 
   init() {
-    this.log('Claude init, readyState:', document.readyState);
+    this.log('Injector init, readyState:', document.readyState);
     
     // Wait for page to fully load
     if (document.readyState === 'loading') {
@@ -73,7 +97,6 @@ class ClaudeInjector {
       
       if (age > maxAge) {
         this.log('Transfer data expired, ignoring');
-        // Clean up expired data
         chrome.storage.local.remove(['twirlTransferData']);
         return null;
       }
@@ -134,10 +157,10 @@ class ClaudeInjector {
     }
 
     this.attempts = attempts;
-    this.log(`Looking for Claude input field, attempt ${attempts + 1}/${this.maxAttempts}`);
+    this.log(`Looking for input field on ${this.platform}, attempt ${attempts + 1}/${this.maxAttempts}`);
     
     if (attempts >= this.maxAttempts) {
-      this.log('Could not find Claude input field after maximum attempts');
+      this.log('Could not find input field after maximum attempts');
       return;
     }
 
@@ -153,28 +176,168 @@ class ClaudeInjector {
   }
 
   findInputField() {
-    this.log('Searching for input field...');
+    this.log(`Searching for input field on ${this.platform}...`);
     
-    // Find contenteditable divs (Claude's current input method)
-    const editableDivs = document.querySelectorAll('div[contenteditable="true"]');
-    this.log(`Found ${editableDivs.length} contenteditable divs`);
-    
-    for (const div of editableDivs) {
-      const rect = div.getBoundingClientRect();
-      const style = window.getComputedStyle(div);
-      
-      this.log(`Checking div - width: ${rect.width}, height: ${rect.height}`);
-      
-      // Claude's input field should be reasonably sized and visible
-      if (rect.width > 100 && rect.height > 5 && 
-          style.display !== 'none' && style.visibility !== 'hidden') {
-        this.log('Found suitable input field!');
-        return div;
+    switch (this.platform) {
+      case 'chatgpt':
+        return this.findChatGPTInput();
+      case 'claude':
+        return this.findClaudeInput();
+      case 'perplexity':
+        return this.findPerplexityInput();
+      case 'gemini':
+        return this.findGeminiInput();
+      case 'poe':
+        return this.findPoeInput();
+      case 'character':
+        return this.findCharacterInput();
+      default:
+        return this.findGenericInput();
+    }
+  }
+
+  findChatGPTInput() {
+    const selectors = [
+      'textarea[data-id="root"]',
+      '#prompt-textarea',
+      'textarea[placeholder*="Message"]',
+      'div[contenteditable="true"]',
+      'textarea',
+      'input[type="text"]'
+    ];
+
+    for (const selector of selectors) {
+      const input = document.querySelector(selector);
+      if (input && this.isValidInput(input)) {
+        this.log('Found ChatGPT input:', selector);
+        return input;
       }
     }
-
-    this.log('No suitable input field found');
     return null;
+  }
+
+  findClaudeInput() {
+    const selectors = [
+      'div[contenteditable="true"]',
+      'textarea[placeholder*="Talk to Claude"]',
+      'textarea',
+      '.ProseMirror',
+      '[data-testid="chat-input"]'
+    ];
+
+    for (const selector of selectors) {
+      const input = document.querySelector(selector);
+      if (input && this.isValidInput(input)) {
+        this.log('Found Claude input:', selector);
+        return input;
+      }
+    }
+    return null;
+  }
+
+  findPerplexityInput() {
+    const selectors = [
+      'textarea[placeholder*="Ask anything"]',
+      'textarea[placeholder*="Follow up"]',
+      'div[contenteditable="true"]',
+      'textarea',
+      '[data-testid="search-input"]'
+    ];
+
+    for (const selector of selectors) {
+      const input = document.querySelector(selector);
+      if (input && this.isValidInput(input)) {
+        this.log('Found Perplexity input:', selector);
+        return input;
+      }
+    }
+    return null;
+  }
+
+  findGeminiInput() {
+    const selectors = [
+      'textarea[aria-label*="Enter a prompt"]',
+      '.ql-editor',
+      'div[contenteditable="true"]',
+      'textarea',
+      '[data-test-id="input"]'
+    ];
+
+    for (const selector of selectors) {
+      const input = document.querySelector(selector);
+      if (input && this.isValidInput(input)) {
+        this.log('Found Gemini input:', selector);
+        return input;
+      }
+    }
+    return null;
+  }
+
+  findPoeInput() {
+    const selectors = [
+      'textarea[class*="ChatMessageInput"]',
+      'textarea[placeholder*="Talk to"]',
+      'div[contenteditable="true"]',
+      'textarea'
+    ];
+
+    for (const selector of selectors) {
+      const input = document.querySelector(selector);
+      if (input && this.isValidInput(input)) {
+        this.log('Found Poe input:', selector);
+        return input;
+      }
+    }
+    return null;
+  }
+
+  findCharacterInput() {
+    const selectors = [
+      'textarea[placeholder*="Type a message"]',
+      'div[contenteditable="true"]',
+      'textarea'
+    ];
+
+    for (const selector of selectors) {
+      const input = document.querySelector(selector);
+      if (input && this.isValidInput(input)) {
+        this.log('Found Character.AI input:', selector);
+        return input;
+      }
+    }
+    return null;
+  }
+
+  findGenericInput() {
+    const selectors = [
+      'textarea',
+      'div[contenteditable="true"]',
+      'input[type="text"]',
+      '[role="textbox"]'
+    ];
+
+    for (const selector of selectors) {
+      const input = document.querySelector(selector);
+      if (input && this.isValidInput(input)) {
+        this.log('Found generic input:', selector);
+        return input;
+      }
+    }
+    return null;
+  }
+
+  isValidInput(input) {
+    if (!input) return false;
+    
+    const rect = input.getBoundingClientRect();
+    const style = window.getComputedStyle(input);
+    
+    // Input should be reasonably sized and visible
+    return rect.width > 100 && rect.height > 20 && 
+           style.display !== 'none' && 
+           style.visibility !== 'hidden' &&
+           !input.disabled &&
+           !input.readOnly;
   }
 
   injectChatHistory(inputField, chatData) {
@@ -200,33 +363,47 @@ class ClaudeInjector {
         formattedHistory = formattedHistory.substring(0, maxLength) + '\n\n[Truncated due to length]';
       }
       
-      // For contenteditable divs
-      inputField.textContent = formattedHistory;
+      // Platform-specific injection
+      this.performInjection(inputField, formattedHistory);
       
-      // Trigger input events to make Claude recognize the content
+      this.injected = true;
+      this.log('Successfully injected chat history');
+
+      // Show visual notification
+      this.showVisualNotification(chatData.messages.length, chatData.source);
+
+    } catch (error) {
+      this.error('Failed to inject chat history', error);
+    }
+  }
+
+  performInjection(inputField, content) {
+    if (inputField.tagName.toLowerCase() === 'textarea') {
+      // For textarea elements
+      inputField.value = content;
+      inputField.dispatchEvent(new Event('input', { bubbles: true }));
+      inputField.dispatchEvent(new Event('change', { bubbles: true }));
+    } else if (inputField.contentEditable === 'true') {
+      // For contenteditable divs
+      inputField.textContent = content;
       inputField.dispatchEvent(new Event('input', { bubbles: true }));
       inputField.dispatchEvent(new Event('change', { bubbles: true }));
       
-      // Focus the input field
-      inputField.focus();
-
-      // Move cursor to end
+      // Set cursor to end for contenteditable
       const range = document.createRange();
       const selection = window.getSelection();
       range.selectNodeContents(inputField);
       range.collapse(false);
       selection.removeAllRanges();
       selection.addRange(range);
-
-      this.injected = true;
-      this.log('Successfully injected chat history into Claude');
-
-      // Show visual notification
-      this.showVisualNotification(chatData.messages.length);
-
-    } catch (error) {
-      this.error('Failed to inject chat history', error);
     }
+    
+    // Focus the input field
+    inputField.focus();
+    
+    // Trigger additional events that some platforms might need
+    inputField.dispatchEvent(new Event('keyup', { bubbles: true }));
+    inputField.dispatchEvent(new Event('paste', { bubbles: true }));
   }
 
   formatChatHistory(chatData) {
@@ -253,8 +430,7 @@ class ClaudeInjector {
     return header + messages + footer;
   }
 
-  showVisualNotification(messageCount) {
-    // Create a simple notification
+  showVisualNotification(messageCount, source) {
     const notification = document.createElement('div');
     notification.style.cssText = `
       position: fixed;
@@ -270,7 +446,7 @@ class ClaudeInjector {
       z-index: 10000;
       transition: opacity 0.3s ease;
     `;
-    notification.textContent = `🌀 Twirl: Injected ${messageCount} messages from ChatGPT`;
+    notification.textContent = `🌀 Twirl: Injected ${messageCount} messages from ${source}`;
 
     document.body.appendChild(notification);
 
@@ -295,7 +471,7 @@ class ClaudeInjector {
 
     // Also monitor input events for when content is pasted
     document.addEventListener('input', (event) => {
-      if (event.target && event.target.contentEditable === 'true') {
+      if (event.target && (event.target.contentEditable === 'true' || event.target.tagName === 'TEXTAREA')) {
         this.detectPastedChatContent(event.target);
       }
     });
@@ -313,7 +489,7 @@ class ClaudeInjector {
       
       // Store original content before paste
       const targetElement = event.target;
-      const originalContent = targetElement.textContent || '';
+      const originalContent = targetElement.value || targetElement.textContent || '';
       
       // Delay slightly to let the paste complete
       setTimeout(() => {
@@ -323,14 +499,13 @@ class ClaudeInjector {
   }
 
   detectPastedChatContent(element) {
-    if (!element || !element.textContent) return;
+    if (!element) return;
     
-    const content = element.textContent;
+    const content = element.value || element.textContent || '';
     
     // Check if this looks like a chat conversation that was just pasted
     if (this.isLikelyChatConversation(content) && content.length > 200) {
       this.log('Detected chat-like content in input field');
-      // For input events, we don't have original content, so pass empty string
       this.offerChatProcessing(content, element, '');
     }
   }
@@ -340,14 +515,16 @@ class ClaudeInjector {
     
     // Patterns that suggest this is a chat conversation
     const chatPatterns = [
-      /User:\s*.*\n.*AI:\s*/i,                          // "User: ... AI: ..."
-      /Human:\s*.*\n.*Assistant:\s*/i,                  // "Human: ... Assistant: ..."
-      /You:\s*.*\n.*ChatGPT:\s*/i,                      // "You: ... ChatGPT: ..."
-      /Q:\s*.*\n.*A:\s*/i,                              // "Q: ... A: ..."
-      /\n\s*User:\s*/i,                                 // Line starting with "User:"
-      /\n\s*AI:\s*/i,                                   // Line starting with "AI:"
-      /Context from ChatGPT:/i,                        // Our own format
-      /Context from Claude:/i,                         // Our own format
+      /User:\s*.*\n.*AI:\s*/i,
+      /Human:\s*.*\n.*Assistant:\s*/i,
+      /You:\s*.*\n.*ChatGPT:\s*/i,
+      /Q:\s*.*\n.*A:\s*/i,
+      /\n\s*User:\s*/i,
+      /\n\s*AI:\s*/i,
+      /Context from ChatGPT:/i,
+      /Context from Claude:/i,
+      /Context from Perplexity:/i,
+      /Context from Gemini:/i,
     ];
 
     // Check for conversation-like patterns
@@ -464,9 +641,12 @@ class ClaudeInjector {
     // Add event listeners
     dialog.querySelector('#twirl-paste-cancel').addEventListener('click', () => {
       // Restore original content when cancelled
-      if (targetElement && targetElement.contentEditable === 'true') {
-        targetElement.textContent = originalContent;
-        // Trigger input events to notify the platform
+      if (targetElement) {
+        if (targetElement.tagName === 'TEXTAREA') {
+          targetElement.value = originalContent;
+        } else {
+          targetElement.textContent = originalContent;
+        }
         targetElement.dispatchEvent(new Event('input', { bubbles: true }));
         targetElement.dispatchEvent(new Event('change', { bubbles: true }));
       }
@@ -474,13 +654,11 @@ class ClaudeInjector {
     });
 
     dialog.querySelector('#twirl-paste-process').addEventListener('click', async () => {
-      // Disable the button to prevent multiple clicks
       const processBtn = dialog.querySelector('#twirl-paste-process');
       processBtn.disabled = true;
       processBtn.textContent = 'Processing...';
       
       try {
-        // Mark this content as processed
         if (contentHash) {
           this.processedContent.add(contentHash);
         }
@@ -490,17 +668,18 @@ class ClaudeInjector {
         this.error('Failed to process conversation:', error);
       }
       
-      // Remove overlay after processing
       overlay.remove();
     });
 
     // Close on outside click and restore content
     overlay.addEventListener('click', (e) => {
       if (e.target === overlay) {
-        // Restore original content when clicking outside
-        if (targetElement && targetElement.contentEditable === 'true') {
-          targetElement.textContent = originalContent;
-          // Trigger input events to notify the platform
+        if (targetElement) {
+          if (targetElement.tagName === 'TEXTAREA') {
+            targetElement.value = originalContent;
+          } else {
+            targetElement.textContent = originalContent;
+          }
           targetElement.dispatchEvent(new Event('input', { bubbles: true }));
           targetElement.dispatchEvent(new Event('change', { bubbles: true }));
         }
@@ -521,7 +700,8 @@ class ClaudeInjector {
     let platform = 'an AI assistant';
     if (/ChatGPT|GPT/i.test(content)) platform = 'ChatGPT';
     else if (/Claude/i.test(content)) platform = 'Claude';
-    else if (/Bard/i.test(content)) platform = 'Bard';
+    else if (/Bard|Gemini/i.test(content)) platform = 'Gemini';
+    else if (/Perplexity/i.test(content)) platform = 'Perplexity';
     
     return {
       messageCount: Math.max(messageLines.length, Math.ceil(lines.length / 3)),
@@ -555,9 +735,6 @@ class ClaudeInjector {
 
       // Save to storage
       await this.savePastedChat(chatData);
-      
-      // Don't replace the content - just leave what the user pasted
-      // The user can use the popup to transfer this conversation later
       
       this.showNotification(`Processed and saved conversation with ${messages.length} messages!`, 'success');
       
@@ -692,5 +869,5 @@ class ClaudeInjector {
   }
 }
 
-// Initialize the injector
-new ClaudeInjector();
+// Initialize the universal injector
+new UniversalChatInjector();
