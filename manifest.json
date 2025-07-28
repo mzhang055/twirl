@@ -15,29 +15,33 @@
     "https://chatgpt.com/*",
     "https://claude.ai/*",
     "https://perplexity.ai/*",
-    "https://gemini.google.com/*"
+    "https://gemini.google.com/*",
+    "https://bard.google.com/*",
+    "https://poe.com/*",
+    "https://character.ai/*"
   ],
   "content_scripts": [
     {
       "matches": [
         "https://chat.openai.com/*",
-        "https://chatgpt.com/*"
+        "https://chatgpt.com/*",
+        "https://claude.ai/*",
+        "https://perplexity.ai/*",
+        "https://gemini.google.com/*",
+        "https://bard.google.com/*",
+        "https://poe.com/*",
+        "https://character.ai/*"
       ],
-      "js": ["src/config.js", "src/content/chatgpt.js"],
+      "js": ["src/config.js", "src/content/universal-extractor.js"],
       "run_at": "document_start"
     },
     {
-      "matches": ["https://claude.ai/*"],
-      "js": ["src/config.js", "src/content/claude.js"],
-      "run_at": "document_idle"
-    },
-    {
-      "matches": ["https://perplexity.ai/*"],
-      "js": ["src/config.js", "src/content/claude.js"],
-      "run_at": "document_idle"
-    },
-    {
-      "matches": ["https://gemini.google.com/*"],
+      "matches": [
+        "https://claude.ai/*",
+        "https://perplexity.ai/*",
+        "https://gemini.google.com/*",
+        "https://bard.google.com/*"
+      ],
       "js": ["src/config.js", "src/content/claude.js"],
       "run_at": "document_idle"
     }

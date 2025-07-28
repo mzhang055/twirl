@@ -480,6 +480,11 @@ class ClaudeInjector {
       processBtn.textContent = 'Processing...';
       
       try {
+        // Mark this content as processed
+        if (contentHash) {
+          this.processedContent.add(contentHash);
+        }
+        
         await this.processPastedConversation(content, targetElement);
       } catch (error) {
         this.error('Failed to process conversation:', error);
@@ -672,6 +677,18 @@ class ClaudeInjector {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+  }
+
+  hashContent(content) {
+    // Simple hash function to create a unique identifier for content
+    let hash = 0;
+    if (content.length === 0) return hash.toString();
+    for (let i = 0; i < content.length; i++) {
+      const char = content.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash; // Convert to 32-bit integer
+    }
+    return hash.toString();
   }
 }
 

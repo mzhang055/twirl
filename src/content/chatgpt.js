@@ -255,42 +255,69 @@ class ChatGPTExtractor {
     };
 
     try {
-      if (typeof chrome !== 'undefined' && chrome.storage) {
-        // Get existing chats
-        const result = await chrome.storage.local.get(['twirlChats', 'twirlSelectedChat']);
-        const existingChats = result.twirlChats || {};
-
-        // Add/update this chat
-        existingChats[chatId] = chatData;
-
-        // Keep only the most recent chats to avoid storage bloat
-        const maxChats = this.config.maxChats || 10;
-        const chatArray = Object.values(existingChats);
-        chatArray.sort((a, b) => b.timestamp - a.timestamp);
-        const recentChats = chatArray.slice(0, maxChats);
-
-        const cleanedChats = {};
-        recentChats.forEach(chat => {
-          cleanedChats[chat.id] = chat;
-        });
-
-        // Set this as the selected chat if none is selected
-        const selectedChat = result.twirlSelectedChat || chatId;
-
-        await chrome.storage.local.set({
-          twirlChats: cleanedChats,
-          twirlSelectedChat: selectedChat,
-          // Keep legacy format for backward compatibility
-          twirlChatHistory: chatData
-        });
-
-        this.log('Chat history saved successfully -', chatData.messages.length, 'messages');
-        this.log('Chat ID:', chatId);
-      } else {
-        this.error('Chrome storage API not available');
+      // Check if extension context is still valid
+      if (typeof chrome === 'undefined' || !chrome.storage || !chrome.runtime) {
+        this.error('Extension context not available, skipping save');
+        return;
       }
+
+      // Check if extension context is still valid by testing runtime
+      if (chrome.runtime.lastError) {
+        this.error('Extension context has errors, skipping save');
+        return;
+      }
+
+      try {
+        // Test if we can access chrome.runtime.id (this will throw if context is invalid)
+        const extensionId = chrome.runtime.id;
+        if (!extensionId) {
+          this.error('Extension context invalidated, skipping save');
+          return;
+        }
+      } catch (contextError) {
+        this.error('Extension context invalidated, skipping save:', contextError.message);
+        return;
+      }
+
+      // Get existing chats
+      const result = await chrome.storage.local.get(['twirlChats', 'twirlSelectedChat']);
+      const existingChats = result.twirlChats || {};
+
+      // Add/update this chat
+      existingChats[chatId] = chatData;
+
+      // Keep only the most recent chats to avoid storage bloat
+      const maxChats = this.config.maxChats || 10;
+      const chatArray = Object.values(existingChats);
+      chatArray.sort((a, b) => b.timestamp - a.timestamp);
+      const recentChats = chatArray.slice(0, maxChats);
+
+      const cleanedChats = {};
+      recentChats.forEach(chat => {
+        cleanedChats[chat.id] = chat;
+      });
+
+      // Set this as the selected chat if none is selected
+      const selectedChat = result.twirlSelectedChat || chatId;
+
+      await chrome.storage.local.set({
+        twirlChats: cleanedChats,
+        twirlSelectedChat: selectedChat,
+        // Keep legacy format for backward compatibility
+        twirlChatHistory: chatData
+      });
+
+      this.log('Chat history saved successfully -', chatData.messages.length, 'messages');
+      this.log('Chat ID:', chatId);
+      
     } catch (error) {
-      this.error('Failed to save chat history:', error);
+      if (error.message && error.message.includes('Extension context invalidated')) {
+        this.error('Extension context invalidated, cannot save chat history. Please reload the page.');
+        // Show user notification if possible
+        this.showUserNotification('Twirl extension needs to be reloaded. Please refresh the page.');
+      } else {
+        this.error('Failed to save chat history:', error);
+      }
     }
   }
 
@@ -309,6 +336,39 @@ class ChatGPTExtractor {
       return title.length > 50 ? title.substring(0, 50) + '...' : title;
     }
     return `Chat from ${new Date().toLocaleDateString()}`;
+  }
+
+  showUserNotification(message) {
+    // Create a visual notification for the user
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #ff6b6b;
+      color: white;
+      padding: 12px 20px;
+      border-radius: 8px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-size: 14px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      z-index: 10000;
+      max-width: 300px;
+      transition: opacity 0.3s ease;
+    `;
+    notification.textContent = message;
+
+    document.body.appendChild(notification);
+
+    // Remove notification after 8 seconds
+    setTimeout(() => {
+      notification.style.opacity = '0';
+      setTimeout(() => {
+        if (notification.parentNode) {
+          notification.parentNode.removeChild(notification);
+        }
+      }, 300);
+    }, 8000);
   }
 }
 
